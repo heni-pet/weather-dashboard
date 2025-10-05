@@ -1,6 +1,6 @@
-import SearchBar from "./components/SearchBar"
+import Dashboard from "./pages/Dashboard";
 
 export default function App() {
-  return <SearchBar />;
+  return <Dashboard />;
 
 }
