@@ -1,5 +1,4 @@
 import { useState,useEffect } from "react";
-import SearchBarWithSuggestions from "../components/SearchBarWithSuggestions";
 import ErrorBoundary from "../components/ErrorBoundary";
 import  ForecastList from "../components/Forecastlist";
 import Loader from "../components/loader";
@@ -14,7 +13,7 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const API_KEY = "b9b064e409bd48dcf12524a8d305159d"; // 🔑 replace with your OpenWeatherMap API key
+  const API_KEY = import.meta.env.VITE_OPENWEATHER_API_KEY;
 
   useEffect(() => {
     async function fetchData() {
@@ -28,9 +27,18 @@ export default function Dashboard() {
         if (!weatherRes.ok) throw new Error("City not found");
         const weatherData = await weatherRes.json();
         setWeather(weatherData);
+        const geoRes = await fetch(
+          `https://api.openweathermap.org/geo/1.0/direct?q=${city}&limit=5&appid=${API_KEY}`
+        );
+        if (!geoRes.ok) throw new Error("Geocoding failed");
+        const geoData = await geoRes.json();
+        if (geoData.length === 0) throw new Error("Location not found");
+        const { lat, lon } = geoData[0];
+
+        // Fetch forecast using lat/lon
 
         const forecastRes = await fetch(
-          `https://api.openweathermap.org/data/2.5/forecast?q=${city}&appid=${API_KEY}&units=metric`
+          `https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lon}&appid=${API_KEY}&units=metric`
         );
         if (!forecastRes.ok) throw new Error("Forecast unavailable");
         const forecastData = await forecastRes.json();
