@@ -8,18 +8,31 @@ export default function SearchBar({ setCity }) {
 
   const API_KEY = import.meta.env.VITE_OPENWEATHER_API_KEY;
 
-  // Load history on mount
+  // Load saved search history from localStorage safely
   useEffect(() => {
-    const saved = JSON.parse(localStorage.getItem("searchHistory")) || [];
-    setHistory(saved); 
+    try {
+      const raw = localStorage.getItem("searchHistory");
+      const parsed = raw ? JSON.parse(raw) : [];
+      setHistory(Array.isArray(parsed) ? parsed : []);
+    } catch (err) {
+      console.error("Failed to parse searchHistory", err);
+      setHistory([]);
+    }
   }, []);
 
-  // Save history whenever it changes
+  // Save updated history to localStorage
   useEffect(() => {
-    localStorage.setItem("searchHistory", JSON.stringify(history));
-  }, [history]); console.log(history);
+    try {
+      // Always stringify before saving, and ensure it’s an array
+      if (Array.isArray(history)) {
+        localStorage.setItem("searchHistory", JSON.stringify(history));
+      }
+    } catch (err) {
+      console.error("Failed to save searchHistory", err);
+    }
+  }, [history]);
 
-  // Fetch city suggestions from OpenWeather API
+  // Fetch suggestions from OpenWeather API
   const fetchSuggestions = async (query) => {
     if (!query.trim()) {
       setSuggestions([]);
@@ -29,13 +42,10 @@ export default function SearchBar({ setCity }) {
     try {
       const res = await fetch(
         `https://api.openweathermap.org/geo/1.0/direct?q=${query}&limit=5&appid=${API_KEY}`
-      ); 
+      );
       const data = await res.json();
-      if (Array.isArray(data)) {
-        setSuggestions(data);
-      } else {
-        setSuggestions([]);
-      }
+      if (Array.isArray(data)) setSuggestions(data);
+      else setSuggestions([]);
     } catch (err) {
       console.error("Error fetching city suggestions:", err);
       setSuggestions([]);
@@ -50,34 +60,39 @@ export default function SearchBar({ setCity }) {
     else setSuggestions([]);
   };
 
-  // Handle form submission
+  // Handle submit
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!input.trim()) return;
 
     setCity(input);
     setInput("");
+    setSuggestions([]);
 
+    // Update local search history (max 5)
     setHistory((prev) => {
       const updated = [input, ...prev.filter((item) => item !== input)].slice(0, 5);
-      localStorage.setItem("searchHistory", JSON.stringify(updated));
       return updated;
     });
-
-    setSuggestions([]);
   };
 
-  // Handle suggestion click
+  // Handle selecting a suggestion or history item
   const handleSelect = (cityObj) => {
     const cityName = cityObj.name || cityObj;
     setCity(cityName);
     setInput("");
     setSuggestions([]);
+
+    // Update history after selecting
+    setHistory((prev) => {
+      const updated = [cityName, ...prev.filter((item) => item !== cityName)].slice(0, 5);
+      return updated;
+    });
   };
 
   return (
     <div className="relative w-full max-w-xl mx-auto mt-4 mb-8">
-      <form onSubmit={handleSubmit} className="w-full max-w-xl mx-auto mt-4 mb-8">
+      <form onSubmit={handleSubmit} className="w-full">
         <div className="flex items-center shadow-2xl rounded-lg overflow-hidden bg-white">
           <input
             type="text"
@@ -95,7 +110,7 @@ export default function SearchBar({ setCity }) {
         </div>
       </form>
 
-      {/* Suggestions from API */}
+      {/* Suggestions */}
       {suggestions.length > 0 && (
         <ul className="absolute z-10 bg-white border border-gray-200 rounded-lg shadow-lg w-full mt-[-20px]">
           {suggestions.map((city, index) => (
@@ -111,10 +126,12 @@ export default function SearchBar({ setCity }) {
         </ul>
       )}
 
-      {/* Search history */}
+      {/* History */}
       {history.length > 0 && suggestions.length === 0 && (
         <div className="mt-3 bg-gray-50 p-3 rounded-lg shadow-inner">
-          <h3 className="text-gray-600 text-sm font-semibold mb-2">Recent Searches:</h3>
+          <h3 className="text-gray-600 text-sm font-semibold mb-2">
+            Recent Searches:
+          </h3>
           <div className="flex flex-wrap gap-2">
             {history.map((city, index) => (
               <button
