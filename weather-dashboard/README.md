@@ -28,10 +28,14 @@ src/
 ├── components/
 │   ├── WeatherCard.jsx
 │   ├── ForecastList.jsx
-│   ├── SearchBarWithSuggestions.jsx
+│   ├── SearchBar.jsx
 │   ├── ErrorBoundary.jsx
 │   ├── Loader.jsx
 │   └── WeatherIcon.jsx
+     |--- Weathercard.jsx
+|___servises/
+     |
+     | __Weatherservices.js
 │
 ├── pages/
 │   └── Dashboard.jsx
@@ -104,13 +108,14 @@ Done! Your live weather dashboard is online.
 🧩 Components Overview
 Component	Purpose
 Dashboard.jsx	Main page and data fetching
-SearchBarWithSuggestions.jsx	Input box with live city suggestions
+SearchBar.jsx	Input box with live city suggestions
 WeatherCard.jsx	Displays current weather info
 ForecastList.jsx	Renders 5-day forecast cards
 WeatherIcon.jsx	Icon logic for weather conditions
 ErrorBoundary.jsx	Prevents app crashes
 Loader.jsx	Shows a spinner during fetches
-🧱 Future Enhancements
+Weatherservises  responsible for handling all interactions with the OpenWeather API.
+🧱 Future Enhancements (optional)
 
  🌐 Geolocation support (detect current city automatically)
 
