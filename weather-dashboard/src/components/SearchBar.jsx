@@ -1,105 +1,100 @@
 // src/components/SearchBar.jsx
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 
 export default function SearchBar({ setCity }) {
   const [input, setInput] = useState("");
   const [suggestions, setSuggestions] = useState([]);
   const [history, setHistory] = useState([]);
+  const initialized = useRef(false);
 
   const API_KEY = import.meta.env.VITE_OPENWEATHER_API_KEY;
-
-  // Load saved search history from localStorage safely
+// Load saved search history from localStorage safely
   useEffect(() => {
     try {
-      const raw = localStorage.getItem("searchHistory");
-      const parsed = raw ? JSON.parse(raw) : [];
-      setHistory(Array.isArray(parsed) ? parsed : []);
+      const saved = localStorage.getItem("searchHistory");
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) setHistory(parsed);
+      }
     } catch (err) {
-      console.error("Failed to parse searchHistory", err);
-      setHistory([]);
+      console.error("Failed to load history:", err);
+    } finally {
+      initialized.current = true;
     }
   }, []);
 
-  // Save updated history to localStorage
   useEffect(() => {
+    if (!initialized.current) return;
     try {
-      // Always stringify before saving, and ensure it’s an array
-      if (Array.isArray(history)) {
+      if (Array.isArray(history) && history.length > 0) {
         localStorage.setItem("searchHistory", JSON.stringify(history));
+      } else {
+        localStorage.removeItem("searchHistory");
       }
     } catch (err) {
-      console.error("Failed to save searchHistory", err);
+      console.error("Failed to save history:", err);
     }
   }, [history]);
-
-  // Fetch suggestions from OpenWeather API
+// Fetch suggestions from OpenWeather API
   const fetchSuggestions = async (query) => {
-    if (!query.trim()) {
+    const trimmed = query.trim();
+    if (!trimmed) {
       setSuggestions([]);
       return;
     }
 
     try {
       const res = await fetch(
-        `https://api.openweathermap.org/geo/1.0/direct?q=${query}&limit=5&appid=${API_KEY}`
+        `https://api.openweathermap.org/geo/1.0/direct?q=${trimmed}&limit=5&appid=${API_KEY}`
       );
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
-      if (Array.isArray(data)) setSuggestions(data);
-      else setSuggestions([]);
+      setSuggestions(Array.isArray(data) ? data : []);
     } catch (err) {
-      console.error("Error fetching city suggestions:", err);
+      console.error("Failed to fetch suggestions:", err);
       setSuggestions([]);
     }
   };
-
-  // Handle input change
-  const handleChange = (e) => {
+ // Handle input change
+  const handleInputChange = (e) => {
     const value = e.target.value;
     setInput(value);
-    if (value.length > 1) fetchSuggestions(value);
-    else setSuggestions([]);
+    fetchSuggestions(value);
   };
-
-  // Handle submit
+  // Handle selecting a suggestion or history item
+  const handleSelectCity = (cityName) => {
+    setCity(cityName);
+    setInput(cityName);
+    setSuggestions([]);
+    setHistory((prev) => {
+      const updated = [cityName, ...prev.filter((c) => c !== cityName)].slice(0, 10); //Update local search history (max 10)
+      return updated;
+    });
+  };
+ // Handle submit
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (!input.trim()) return;
-
-    setCity(input);
-    setInput("");
-    setSuggestions([]);
-
-    // Update local search history (max 5)
-    setHistory((prev) => {
-      const updated = [input, ...prev.filter((item) => item !== input)].slice(0, 5);
-      return updated;
-    });
+    const trimmed = input.trim();
+    if (trimmed) {
+      handleSelectCity(trimmed);
+    }
   };
-
-  // Handle selecting a suggestion or history item
-  const handleSelect = (cityObj) => {
-    const cityName = cityObj.name || cityObj;
-    setCity(cityName);
-    setInput("");
-    setSuggestions([]);
-
-    // Update history after selecting
-    setHistory((prev) => {
-      const updated = [cityName, ...prev.filter((item) => item !== cityName)].slice(0, 5);
-      return updated;
-    });
+// clear search history
+  const clearHistory = () => {
+    setHistory([]);
+    localStorage.removeItem("searchHistory");
   };
 
   return (
     <div className="relative w-full max-w-xl mx-auto mt-4 mb-8">
       <form onSubmit={handleSubmit} className="w-full">
-        <div className="flex items-center shadow-2xl rounded-lg overflow-hidden bg-white">
+        <div className="flex items-center shadow-2xl rounded-lg overflow-hidden bg-gray-200">
           <input
             type="text"
             value={input}
-            onChange={handleChange}
-            placeholder="Enter city name, e.g., London"
-            className="flex-grow p-4 text-gray-800 bg-white border-none focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-opacity-50"
+            onChange={handleInputChange}
+            placeholder="Enter city name..."
+            className="w-full px-4 py-3 text-gray-800 focus:outline-none"
           />
           <button
             type="submit"
@@ -110,39 +105,42 @@ export default function SearchBar({ setCity }) {
         </div>
       </form>
 
-      {/* Suggestions */}
       {suggestions.length > 0 && (
-        <ul className="absolute z-10 bg-white border border-gray-200 rounded-lg shadow-lg w-full mt-[-20px]">
+        <ul className="absolute w-full bg-white border border-gray-200 rounded-lg shadow-lg mt-1 max-h-60 overflow-y-auto z-10">
           {suggestions.map((city, index) => (
             <li
               key={index}
-              onClick={() => handleSelect(city)}
-              className="px-4 py-2 cursor-pointer hover:bg-blue-100 transition"
+              onClick={() => handleSelectCity(city.name)}
+              className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
             >
               {city.name}, {city.country}
-              {city.state ? ` (${city.state})` : ""}
             </li>
           ))}
         </ul>
       )}
 
-      {/* History */}
-      {history.length > 0 && suggestions.length === 0 && (
-        <div className="mt-3 bg-gray-50 p-3 rounded-lg shadow-inner">
-          <h3 className="text-gray-600 text-sm font-semibold mb-2">
-            Recent Searches:
-          </h3>
-          <div className="flex flex-wrap gap-2">
+      {history.length > 0 && (
+        <div className="bg-white shadow-md rounded-lg p-3 mt-3">
+          <div className="flex justify-between items-center mb-2">
+            <span className="font-medium text-gray-700">Recent Searches</span>
+            <button
+              onClick={clearHistory}
+              className="text-sm text-red-600 hover:underline"
+            >
+              Clear
+            </button>
+          </div>
+          <ul className="divide-y divide-gray-200">
             {history.map((city, index) => (
-              <button
+              <li
                 key={index}
-                onClick={() => handleSelect(city)}
-                className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm hover:bg-blue-200 transition"
+                onClick={() => handleSelectCity(city)}
+                className="py-1 px-2 hover:bg-gray-100 cursor-pointer"
               >
                 {city}
-              </button>
+              </li>
             ))}
-          </div>
+          </ul>
         </div>
       )}
     </div>
