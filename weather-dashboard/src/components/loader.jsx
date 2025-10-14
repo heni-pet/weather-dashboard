@@ -1,3 +1,4 @@
+//Shows a spinner during fetches
 export default function Loader() {
   return (
     <div className="flex justify-center items-center py-6">
