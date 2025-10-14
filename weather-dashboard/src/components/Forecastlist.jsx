@@ -13,6 +13,8 @@ export default function ForecastList({ data }) {
             })}
           </p>
           <p>{day.main.temp}°C</p>
+          <p>Humidity {day.main.humidity}%</p>
+          <p>Wind {day.wind.speed} m/s</p>
           <p>{day.weather[0].main}</p>
           <WeatherIcon code={day.weather[0].icon} className="w-12 h-12 mx-auto" />
         </div>
