@@ -1,3 +1,5 @@
+	//Prevents app crashes and  display error messages
+
 import React from "react";
 
 export default class ErrorBoundary extends React.Component {
