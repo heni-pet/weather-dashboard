@@ -1,5 +1,5 @@
 import React from "react";
-import WeatherIcon from "./WeatherIcon";
+import WeatherIcon from "./Weathericon";
 
 function WeatherCard({ data })  {
   
