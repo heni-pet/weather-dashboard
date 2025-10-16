@@ -1,9 +1,9 @@
-import { useState,useEffect } from "react";
+  import { useState,useEffect } from "react";
 import ErrorBoundary from "../components/ErrorBoundary";
 import  ForecastList from "../components/Forecastlist";
 import Loader from "../components/loader";
 import SearchBar from "../components/SearchBar";
-import  Weathercard   from "../components/WeatherCard";
+import Weathercard from "../components/Weathercard";
 import Weathericon from "../components/Weathericon";
 
 export default function Dashboard() {
@@ -23,7 +23,7 @@ export default function Dashboard() {
 
     const weatherRes = await fetch(
           `https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${API_KEY}&units=metric`
-        );
+        ); 
         if (!weatherRes.ok) throw new Error("City not found");
         const weatherData = await weatherRes.json();
         setWeather(weatherData);
@@ -39,7 +39,7 @@ export default function Dashboard() {
 
         const forecastRes = await fetch(
           `https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lon}&appid=${API_KEY}&units=metric`
-        );
+        ); console.log(forecastRes);
         if (!forecastRes.ok) throw new Error("Forecast unavailable");
         const forecastData = await forecastRes.json();
         setForecast(forecastData.list);
@@ -51,7 +51,7 @@ export default function Dashboard() {
     }
 
     fetchData();
-  }, [city]);
+  }, [city, API_KEY]);
 
   return (
     <main className="p-6 max-w-xl mx-auto">
@@ -65,6 +65,7 @@ export default function Dashboard() {
       {error && <p className="text-red-500 text-center">{error}</p>}
 
       {weather && <Weathercard data={weather} />}
+      
       {forecast.length > 0 && <ForecastList data={forecast} />}
     </main>
   );
