@@ -1,4 +1,4 @@
-import WeatherIcon from "./WeatherIcon";
+import WeatherIcon from "./Weathericon";
 export default function ForecastList({ data }) {
   // Show next 5 days (every 8th item = 24h in 3h intervals)
   const daily = data.filter((_, idx) => idx % 8 === 0).slice(0, 5);
