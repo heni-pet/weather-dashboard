@@ -1,5 +1,6 @@
+import fetch from 'node-fetch';
 const API_KEY = "YOUR_API_KEY"; // from OpenWeatherMap
-const BASE_URL = "https://api.openweathermap.org/data/2.5";
+const BASE_URL = import.meta.env.VITE_OPENWEATHER_API_URL;
 
 export async function getCurrentWeather(lat, lon) {
   const res = await fetch(
