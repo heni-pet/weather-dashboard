@@ -1,6 +1,6 @@
 // utils/weatherIcons.js
 import React from "react";
-import {Sun ,Moon,Cloud,CloudRain,CloudSnow,Wind,CloudLightning,Thermometer} from "lucide-react"
+import {Sun ,Moon,Cloud,CloudRain,CloudSun,CloudSnow,Wind,CloudLightning,Thermometer} from "lucide-react"
 
 // Map weather code to simplified type
 function mapWeatherCodeToType(code) {

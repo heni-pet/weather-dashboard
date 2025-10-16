@@ -4,7 +4,6 @@ import  ForecastList from "../components/Forecastlist";
 import Loader from "../components/loader";
 import SearchBar from "../components/SearchBar";
 import Weathercard from "../components/Weathercard";
-import Weathericon from "../components/Weathericon";
 
 export default function Dashboard() {
   const [city, setCity] = useState("Addis Ababa");
